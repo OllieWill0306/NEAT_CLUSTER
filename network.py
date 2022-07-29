@@ -3,6 +3,7 @@ import _thread as thread
 import time
 import math
 import hashlib
+import copy
 conf = False
 CONFMSG = "Conf."
 PORT = 1500
@@ -89,7 +90,7 @@ def sendProtocol(soc,item,is_confirm=True):
 
     hashString = hashlib.sha256(byteList).hexdigest()
 
-    oldByteList = byteList.copy()
+    oldByteList = copy.deapcopy(byteList)
 
     while 1:
         sent = 0
@@ -106,7 +107,7 @@ def sendProtocol(soc,item,is_confirm=True):
         if recvHash == hashString:
             break
         soc.send("NO.".encode("ascii"))
-        byteList = oldByteList.copy()
+        byteList = copy.deepcopy(oldByteList)
 
     soc.send("OK.".encode("ascii"))
        
