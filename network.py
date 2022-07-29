@@ -113,7 +113,7 @@ def reciveProtocol(soc,convert_type=None,is_confirm=True):
         for i in range(number):
             b += soc.recv(4096)
         extra = size - (number * 4096)
-        b += soc.recv(extra)
+        if extra > 0: b += soc.recv(extra)
     else:
         b = soc.recv(size)
     if convert_type == int:
