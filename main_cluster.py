@@ -130,6 +130,10 @@ if __name__ == '__main__':
     global server
     server = network.Server(network.PORT)
 
+    print("Server ip address: ", network.selfIp())
+    print("On Port: ", network.PORT)
+    
+    
     #waits for client to connect
     print("Waiting for client to connect")
     while len(server.clientList) == 0: pass
