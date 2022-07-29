@@ -80,6 +80,9 @@ def sendProtocol(soc,item,is_confirm=True):
     if type(item) == str:byteList = bytes(item, 'utf-8')
     if type(item) == int:byteList = item.to_bytes(4, byteorder='big')    
     size = len(byteList)
+    if size > 1000000:
+        print("Network error trying to send to much data")
+        while 1==1: pass
     while 1:
         if size > 255:
             size -= 255
