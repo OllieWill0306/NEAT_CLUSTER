@@ -2,6 +2,7 @@ import socket
 import _thread as thread
 import time
 import math
+import hashlib
 conf = False
 CONFMSG = "Conf."
 PORT = 1500
@@ -74,57 +75,69 @@ class Server():
             idx = self.clientList.index(client)
         self.clientList.pop(idx)
 
+
 def sendProtocol(soc,item,is_confirm=True):
-    if conf and is_confirm: sendProtocol(soc,CONFMSG,False)
     byteList = item
     if type(item) == str:byteList = bytes(item, 'utf-8')
-    if type(item) == int:byteList = item.to_bytes(4, byteorder='big')    
+    if type(item) == int:byteList = item.to_bytes(4, byteorder='big')
     size = len(byteList)
+    if size == 0: return
+    soc.send(int(size).to_bytes(8, byteorder='big'))
+    while size != int.from_bytes(soc.recv(8), "big"):
+        soc.send(int(size).to_bytes(8, byteorder='big'))
+    soc.send(int(0).to_bytes(8, byteorder='big'))
+
+    hashString = hashlib.sha256(byteList).hexdigest()
+
+    oldByteList = byteList.copy()
+
     while 1:
-        if size > 255:
-            size -= 255
-            soc.send(bytes([255]))
-        else:
-            if size != 0:
-                soc.send(bytes([size]))
+        sent = 0
+        while len(byteList) > 4096:
+            print("Sending: ", byteList[:4096])
+            soc.send(byteList[:4096])        
+            byteList = byteList[4096:]
+            sent += 4096
+        #send remaining bytes
+        if size - sent > 0:
+            soc.send(byteList)
+
+        recvHash = soc.recv(256).decode("ascii")
+        if recvHash == hashString:
             break
-    soc.send(bytes([0]))
-    while len(byteList) > 900000:
-        soc.send(byteList[:900000])
-        byteList = byteList[900000:]            
-    soc.send(byteList) 
-    if conf and is_confirm:
-        ret = ""
-        while ret != CONFMSG:
-            ret = reciveProtocol(soc,str,False)
+        soc.send("NO.".encode("ascii"))
+        byteList = oldByteList.copy()
+
+    soc.send("OK.".encode("ascii"))
+       
+        
+    
 
 def reciveProtocol(soc,convert_type=None,is_confirm=True):
-    if is_confirm and conf:
-        ret = ""
-        while ret != CONFMSG:
-            ret = reciveProtocol(soc,str,False)
-        sendProtocol(soc,CONFMSG,False)
-    size = 0
     while 1:
-        addNum = int.from_bytes(soc.recv(1), "big")   
-        if addNum == 0:
+        size = int.from_bytes(soc.recv(8), "big")
+        soc.send(int(size).to_bytes(8, byteorder='big'))
+        if int.from_bytes(soc.recv(8), "big") == 0:
             break
-        size += addNum
-    if size > 4096:
+    MAX_SIZE = 4096
+    while 1:
         b = b""
-        number = math.floor(size / 4096)
-        for i in range(number):
-            b += soc.recv(4096)
-        extra = size - (number * 4096)
-        if extra > 0: b += soc.recv(extra)
-    else:
-        b = soc.recv(size)
+        for i in range(math.floor(size/MAX_SIZE)):
+            b += soc.recv(MAX_SIZE)
+        b += soc.recv(size-(math.floor(size/MAX_SIZE) * MAX_SIZE))
+
+        hashString = hashlib.sha256(b).hexdigest()
+
+        soc.send(hashString.encode("ascii"))
+
+        if soc.recv(len("OK.")).decode("ascii") == "OK.":
+            break
+
     if convert_type == int:
         b = int.from_bytes(b, "big")   
     if convert_type == str:
         b = b.decode("utf-8")
-    if conf and is_confirm:
-        sendProtocol(soc,CONFMSG,False)
+
     return b
 
 
