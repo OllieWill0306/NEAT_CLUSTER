@@ -92,6 +92,9 @@ def sendProtocol(soc,item,is_confirm=True):
                 soc.send(bytes([size]))
             break
     soc.send(bytes([0]))
+    while len(byteList) > 900000:
+        soc.send(byteList[:900000])
+        byteList = byteList[900000:]            
     soc.send(byteList) 
     if conf and is_confirm:
         ret = ""
