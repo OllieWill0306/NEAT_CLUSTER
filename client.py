@@ -29,6 +29,7 @@ def run_genome(dataList):
         ans = min(output[correct],20.0)
         output[correct] = 0
         genome.fitness += ans - (np.sum(output) / 9.0) + float(pick == correct)
+    print("Evaluated Genome/", end = "")
     return genome
 progressList = []
 def eval_genomes():
@@ -44,6 +45,7 @@ def eval_genomes():
             results = pool.map(run_genome, argList)
     for i in range(len(results)):
         argList[i][0].fitness = results[i].fitness
+    print("")
 def ReadConfigFile(): 
     ip_string = None   
     userName = None
