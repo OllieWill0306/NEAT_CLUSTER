@@ -93,6 +93,7 @@ def reciveProtocol(soc,convert_type=None,is_confirm=True):
     size = int.from_bytes(soc.recv(8), "big")
 
     b = soc.recv(size)
+    print("Missing bytes: ", size - len(b))
 
     if convert_type == int:
         b = int.from_bytes(b, "big")   
