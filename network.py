@@ -97,6 +97,11 @@ def reciveProtocol(soc,convert_type=None,is_confirm=True):
     b = b""
     for i in range(size):
         b += soc.recv(1)
+        
+    if convert_type == int:
+        b = int.from_bytes(b, "big")   
+    if convert_type == str:
+        b = b.decode("utf-8")
 
     return b
 
