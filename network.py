@@ -77,6 +77,7 @@ class Server():
         self.clientList.pop(idx)
 
 
+
 def sendProtocol(soc,item,is_confirm=True):
     byteList = item
     if type(item) == str:byteList = bytes(item, 'utf-8')
@@ -85,9 +86,9 @@ def sendProtocol(soc,item,is_confirm=True):
     if size == 0: return
     soc.send(int(size).to_bytes(8, byteorder='big'))
 
-    for i in range(size):
-        soc.send(byteList[i])
-       
+    for i in range(math.trunc(size / 4000)):
+        soc.send(byteList[:4000])
+        byteList = byteList[4000:]
         
     
 
@@ -97,7 +98,8 @@ def reciveProtocol(soc,convert_type=None,is_confirm=True):
     b = b""
     for i in range(size):
         b += soc.recv(1)
-        
+        if i % 4000 == 0: print("Remaining: ", size - i)
+
     if convert_type == int:
         b = int.from_bytes(b, "big")   
     if convert_type == str:
