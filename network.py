@@ -86,33 +86,13 @@ def sendProtocol(soc,item,is_confirm=True):
     if size == 0: return
     soc.send(int(size).to_bytes(8, byteorder='big'))
 
-    #for i in range(math.trunc(size / 4000)):
-    while len(byteList) != 0:
-        soc.send(byteList[:4000])
-        while soc.recv(3).decode("ascii") != "OK.":
-            soc.send(byteList[:4000])
-            print("Resending Packet")
-        byteList = byteList[4000:]
-        print("len: ", len(byteList))
-        
-        
+    soc.send(byteList)
     
 
 def reciveProtocol(soc,convert_type=None,is_confirm=True):
     size = int.from_bytes(soc.recv(8), "big")
 
-    b = b""
-    for i in range(math.floor(size / 4000)):
-        s = soc.recv(4000)
-        print("Packets Left: ", math.floor(size / 4000) - i)
-        while len(s) != 4000:
-            soc.send("NO.".encode("ascii"))
-            s = soc.recv(4000)
-            print("Packet Size: ", len(s))
-        soc.send("OK.".encode("ascii"))
-        b += s
-        print("Remaining: ", size - i)
-    b += soc.recv(size % 4000)
+    b = soc.recv(size)
 
     if convert_type == int:
         b = int.from_bytes(b, "big")   
@@ -120,6 +100,7 @@ def reciveProtocol(soc,convert_type=None,is_confirm=True):
         b = b.decode("utf-8")
 
     return b
+
 
 '''
 def sendProtocol(soc,item,is_confirm=True):
